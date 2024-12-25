@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Customer Dashboard</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Welcome, {{ current_user.name }}</h1>
+
+    <!-- Profile Management Section -->
+    <h2>Update Profile</h2>
+    <form method="POST" action="{{ url_for('update_customer_profile') }}" class="row g-3">
+        <div class="col-md-6">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ current_user.name }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="phone" class="form-label">Phone</label>
+            <input type="text" id="phone" name="phone" class="form-control" value="{{ current_user.phone }}" required>
+        </div>
+        <div class="col-md-6">
+            <label for="pin_code" class="form-label">Pin Code</label>
+            <input type="text" id="pin_code" name="pin_code" class="form-control" value="{{ current_user.pin_code }}">
+        </div>
+        <div class="col-12">
+            <label for="address" class="form-label">Address</label>
+            <textarea id="address" name="address" class="form-control">{{ current_user.address }}</textarea>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+        </div>
+    </form>
+
+    <!-- Service Request Management -->
+    <h2 class="mt-5">Service Requests</h2>
+
+    <!-- Create New Service Request -->
+    <h3>Create a New Service Request</h3>
+    <form method="POST" action="{{ url_for('create_service_request') }}" class="row g-3">
+        <div class="col-md-6">
+            <label for="service_id" class="form-label">Select Service</label>
+            <select id="service_id" name="service_id" class="form-select" required>
+                {% for service in services %}
+                <option value="{{ service.id }}">{{ service.name }} - ${{ service.base_price }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12">
+            <label for="remarks" class="form-label">Remarks</label>
+            <textarea id="remarks" name="remarks" class="form-control"></textarea>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-success">Create Request</button>
+        </div>
+    </form>
+
+    <!-- Existing Service Requests -->
+<h3 class="mt-5">Your Service Requests</h3>
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Request ID</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Date of Request</th>
+                <th>Remarks</th>
+                <th>Assigned Professional</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in service_requests %}
+            <tr>
+                <td>{{ request.id }}</td>
+                <td>{{ request.service.name }}</td>
+                <td>{{ request.service_status }}</td>
+                <td>{{ request.date_of_request }}</td>
+                <td>{{ request.remarks }}</td>
+                <td>
+                    {% if request.professional %}
+                    {{ request.professional.name }}
+                    {% else %}
+                    <span class="text-muted">Unassigned</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if request.service_status == 'closed' %}
+                    <!-- Review Form for Closed Requests -->
+                    <form method="POST" action="{{ url_for('leave_review', request_id=request.id) }}">
+                        <label for="rating" class="form-label">Rating (1-5):</label>
+                        <input type="number" name="rating" id="rating" min="1" max="5" required class="form-control mb-2">
+                        <label for="feedback" class="form-label">Feedback:</label>
+                        <textarea name="feedback" id="feedback" class="form-control mb-2"></textarea>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Submit Review</button>
+                    </form>
+                    {% else %}
+                    <!-- Option to Edit or Close Request -->
+                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ request.id }}">
+                        Edit
+                    </button>
+                    <form method="POST" action="{{ url_for('close_service_request', request_id=request.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Close</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            
+            <!-- Modal for Editing Service Request -->
+            <div class="modal fade" id="editModal{{ request.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ request.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ url_for('edit_service_request', request_id=request.id) }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editModalLabel{{ request.id }}">Edit Service Request</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="remarks{{ request.id }}" class="form-label">Remarks</label>
+                                    <textarea id="remarks{{ request.id }}" name="remarks" class="form-control">{{ request.remarks }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="service_id{{ request.id }}" class="form-label">Service</label>
+                                    <select id="service_id{{ request.id }}" name="service_id" class="form-select">
+                                        {% for service in services %}
+                                        <option value="{{ service.id }}" {% if service.id == request.service.id %}selected{% endif %}>
+                                            {{ service.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+    <!-- Search for Available Services -->
+    <h3 class="mt-5">Search Available Services</h3>
+    <form method="GET" action="{{ url_for('search_services') }}" class="row g-3">
+        <div class="col-md-8">
+            <label for="query" class="form-label">Search Services</label>
+            <input type="text" id="query" name="query" class="form-control" placeholder="Search by name or description" required>
+        </div>
+        <div class="col-md-4 align-self-end">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <!-- Display Search Results -->
+    {% if search_results %}
+    <h3 class="mt-5">Search Results</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-primary">
+                <tr>
+                    <th>Service ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Base Price</th>
+                    <th>Time Required</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in search_results %}
+                <tr>
+                    <td>{{ service.id }}</td>
+                    <td>{{ service.name }}</td>
+                    <td>{{ service.description }}</td>
+                    <td>{{ service.base_price }}</td>
+                    <td>{{ service.time_required }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

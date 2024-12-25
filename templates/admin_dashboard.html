@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Admin Dashboard</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Welcome, Admin</h1>
+
+    <!-- User Management Section -->
+    <h2>Manage Users</h2>
+
+    <!-- Customers -->
+    <h3>Customers</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-primary">
+                <tr>
+                    <th>Customer ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.id }}</td>
+                    <td>{{ customer.name }}</td>
+                    <td>{{ customer.email }}</td>
+                    <td>{{ customer.phone }}</td>
+                    <td>
+                        {% if customer.is_active %}
+                        <form method="POST" action="{{ url_for('block_user', user_type='customer', user_id=customer.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">Block</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('unblock_user', user_type='customer', user_id=customer.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">Unblock</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Service Professionals -->
+    <h3>Service Professionals</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-success">
+                <tr>
+                    <th>Professional ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Service Type</th>
+                    <th>Verified</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for professional in professionals %}
+                <tr>
+                    <td>{{ professional.id }}</td>
+                    <td>{{ professional.name }}</td>
+                    <td>{{ professional.email }}</td>
+                    <td>{{ professional.phone }}</td>
+                    <td>{{ professional.service_type }}</td>
+                    <td>{{ 'Yes' if professional.profile_verified else 'No' }}</td>
+                    <td>
+                        {% if not professional.profile_verified %}
+                        <form method="POST" action="{{ url_for('approve_professional', professional_id=professional.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                        </form>
+                        {% endif %}
+                        {% if professional.is_active %}
+                        <form method="POST" action="{{ url_for('block_user', user_type='service_professional', user_id=professional.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">Block</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('unblock_user', user_type='service_professional', user_id=professional.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">Unblock</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Service Management Section -->
+    <h2>Service Management</h2>
+
+    <!-- Add New Service -->
+    <h3>Add New Service</h3>
+    <form method="POST" action="{{ url_for('add_service') }}" class="row g-3">
+        <div class="col-md-6">
+            <label for="name" class="form-label">Service Name</label>
+            <input type="text" id="name" name="name" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+            <label for="description" class="form-label">Description</label>
+            <textarea id="description" name="description" class="form-control"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label for="base_price" class="form-label">Base Price</label>
+            <input type="number" id="base_price" name="base_price" class="form-control" step="0.01" required>
+        </div>
+        <div class="col-md-6">
+            <label for="time_required" class="form-label">Time Required</label>
+            <input type="text" id="time_required" name="time_required" class="form-control" required>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Add Service</button>
+        </div>
+    </form>
+
+    <!-- Manage Services -->
+    <h3 class="mt-5">Manage Services</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Service ID</th>
+                    <th>Service Name</th>
+                    <th>Description</th>
+                    <th>Base Price</th>
+                    <th>Time Required</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in services %}
+                <tr>
+                    <td>{{ service.id }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('edit_service', service_id=service.id) }}" class="d-inline">
+                            <input type="text" name="name" value="{{ service.name }}" class="form-control" required>
+                    </td>
+                    <td>
+                            <textarea name="description" class="form-control">{{ service.description }}</textarea>
+                    </td>
+                    <td>
+                            <input type="number" name="base_price" value="{{ service.base_price }}" step="0.01" class="form-control" required>
+                    </td>
+                    <td>
+                            <input type="text" name="time_required" value="{{ service.time_required }}" class="form-control" required>
+                    </td>
+                    <td>
+                            <button type="submit" class="btn btn-success btn-sm">Save</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_service', service_id=service.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Reviews Section -->
+    <h3 class="mt-5">Service Professional Reviews</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Professional Name</th>
+                    <th>Service</th>
+                    <th>Rating</th>
+                    <th>Feedback</th>
+                    <th>Customer Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in reviews %}
+                <tr>
+                    <td>{{ review.service_request.professional.name }}</td>
+                    <td>{{ review.service_request.service.name }}</td>
+                    <td>{{ review.rating }}</td>
+                    <td>{{ review.feedback }}</td>
+                    <td>{{ review.customer.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

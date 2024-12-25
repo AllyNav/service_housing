@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
+        <h1 class="text-center mb-4 text-primary">Admin Login</h1>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control") }}
+                {% for error in form.username.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control") }}
+                {% for error in form.password.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="d-grid">
+                {{ form.submit(class="btn btn-primary btn-block") }}
+            </div>
+        </form>
+        <br>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Main</a>
+    </div>
+</div>
+{% endblock %}
